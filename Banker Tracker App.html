@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Banker Tracker</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            margin: 5px;
+            padding: 8px;
+        }
+        #playerInputs input, #playerNames input {
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Banker Bets</h1>
+    <div id="playerNames">
+        <h2>Player Names</h2>
+        <input type="text" id="player1Name" placeholder="Enter Player 1 Name" value="Player 1">
+        <input type="text" id="player2Name" placeholder="Enter Player 2 Name" value="Player 2">
+        <input type="text" id="player3Name" placeholder="Enter Player 3 Name" value="Player 3">
+        <input type="text" id="player4Name" placeholder="Enter Player 4 Name" value="Player 4">
+        <button onclick="setPlayerNames()">Set Names</button>
+    </div>
+    <div id="betInput" style="display: none;">
+        <label for="holeNumber">Hole Number:</label>
+        <input type="number" id="holeNumber" min="1" placeholder="Enter hole number" value="1">
+        <div id="playerInputs"></div>
+        <button onclick="addHoleResults()">Add Results</button>
+    </div>
+    <h2>Current Standings</h2>
+    <div id="standings"></div>
+    <button onclick="calculatePayouts()">Calculate Payouts</button>
+    <div id="payouts"></div>
+    <script>
+        let players = ['Player 1', 'Player 2', 'Player 3', 'Player 4']; // Default names
+        let standings = players.reduce((acc, player) => ({...acc, [player]: 0}), {});
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePlayerInputs();
+        });
+
+        function setPlayerNames() {
+            players = [
+                document.getElementById('player1Name').value,
+                document.getElementById('player2Name').value,
+                document.getElementById('player3Name').value,
+                document.getElementById('player4Name').value
+            ];
+            standings = players.reduce((acc, player) => ({...acc, [player]: 0}), {});
+            updatePlayerInputs();
+            document.getElementById('betInput').style.display = 'block'; // Show betting interface
+        }
+
+        function updatePlayerInputs() {
+            const playerInputsDiv = document.getElementById('playerInputs');
+            playerInputsDiv.innerHTML = ''; // Clear existing inputs
+            players.forEach(player => {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.placeholder = `${player} win/loss`;
+                input.id = player.replace(/\s+/g, '').toLowerCase();
+                playerInputsDiv.appendChild(input);
+            });
+            updateStandingsDisplay();
+        }
+
+        function addHoleResults() {
+            players.forEach(player => {
+                const inputId = player.replace(/\s+/g, '').toLowerCase();
+                const result = parseFloat(document.getElementById(inputId).value) || 0;
+                standings[player] += result;
+                document.getElementById(inputId).value = ''; // Clear the input after adding
+            });
+            updateStandingsDisplay();
+            incrementHoleNumber();
+        }
+
+        function incrementHoleNumber() {
+            const holeInput = document.getElementById('holeNumber');
+            holeInput.value = parseInt(holeInput.value) + 1; // Increment hole number
+        }
+
+        function updateStandingsDisplay() {
+            const standingsDiv = document.getElementById('standings');
+            standingsDiv.innerHTML = ''; // Clear previous standings
+            Object.keys(standings).forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.textContent = `${player}: $${standings[player].toFixed(2)}`;
+                standingsDiv.appendChild(playerDiv);
+            });
+        }
+
+        function calculatePayouts() {
+            let payoutsText = 'Payouts:\n';
+            Object.keys(standings).forEach(payer => {
+                Object.keys(standings).forEach(receiver => {
+                    if (standings[payer] < 0 && standings[receiver] > 0) {
+                        const amount = Math.min(-standings[payer], standings[receiver]);
+                        if (amount > 0) {
+                            payoutsText += `${payer} pays ${receiver} $${amount.toFixed(2)}\n`;
+                            standings[payer] += amount;
+                            standings[receiver] -= amount;
+                        }
+                    }
+                });
+            });
+            document.getElementById('payouts').textContent = payoutsText;
+            updateStandingsDisplay(); // Update display after calculating payouts
+        }
+    </script>
+</body>
+</html>
